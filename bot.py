@@ -100,13 +100,14 @@ def handle_screenshot(message):
 @check_auth
 def handle_status(message):
     stats = system_info.get_system_stats()
+    disk_label = stats.get("disk_mount", "/")
     text = (
         f"📊 <b>Sistem Durumu</b>\n"
         f"━━━━━━━━━━━━━━━━━━\n"
         f"💻 <b>Aktif Pencere:</b> <code>{stats['active_window']}</code>\n"
         f"⚡ <b>CPU Kullanımı:</b> %{stats['cpu_percent']} ({stats['cpu_count']} Çekirdek)\n"
         f"🧠 <b>RAM:</b> {stats['ram_used_gb']:.1f} GB / {stats['ram_total_gb']:.1f} GB (%{stats['ram_percent']})\n"
-        f"💾 <b>Disk (C:):</b> {stats['disk_free_gb']:.1f} GB Boş / {stats['disk_total_gb']:.1f} GB (%{stats['disk_percent']} dolu)\n"
+        f"💾 <b>Disk ({disk_label}):</b> {stats['disk_free_gb']:.1f} GB Boş / {stats['disk_total_gb']:.1f} GB (%{stats['disk_percent']} dolu)\n"
         f"🔋 <b>Güç / Pil:</b> {stats['battery_info']}\n"
         f"⏱️ <b>Çalışma Süresi:</b> {stats['uptime']}\n"
     )
@@ -168,13 +169,14 @@ def handle_command(message):
     # Komut argümanını ayıkla
     cmd = message.text.replace("/cmd", "", 1).strip()
     if not cmd:
-        bot.send_message(message.chat.id, "Kullanım: <code>/cmd &lt;çalıştırılacak komut&gt;</code>\nÖrnek: <code>/cmd dir</code>")
+        bot.send_message(message.chat.id, "Kullanım: <code>/cmd &lt;çalıştırılacak komut&gt;</code>\nÖrnek: <code>/cmd ls -la</code>")
         return
 
     wait_msg = bot.send_message(message.chat.id, f"⚡ Komut çalıştırılıyor:\n<code>{cmd}</code>")
     try:
+        shell_cmd = ["powershell", "-NoProfile", "-Command", cmd] if system_info.IS_WINDOWS else ["bash", "-c", cmd]
         proc = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", cmd],
+            shell_cmd,
             capture_output=True,
             text=True,
             timeout=25
