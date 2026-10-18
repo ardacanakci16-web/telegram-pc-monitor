@@ -1,0 +1,25 @@
+# Environment variables and secrets
+.env
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Screenshots and temporary media
+screenshots/
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
+logs/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
