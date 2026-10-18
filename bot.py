@@ -196,6 +196,53 @@ def handle_command(message):
         bot.edit_message_text(f"❌ Komut çalıştırma hatası: {e}", message.chat.id, wait_msg.message_id)
 
 
+@bot.message_handler(func=lambda msg: True)
+@check_auth
+def handle_general_message(message):
+    raw_text = (message.text or "").strip()
+    text_lower = raw_text.lower()
+    
+    # Gelen mesajı konsola ve dosyaya kaydet
+    ts = time.strftime('%Y-%m-%d %H:%M:%S')
+    log_line = f"[{ts}] {message.from_user.first_name} (ID: {message.from_user.id}): {raw_text}\n"
+    print(f"[MESAJ ALINDI] {raw_text}")
+    try:
+        from config import BASE_DIR
+        with open(BASE_DIR / "chat_history.log", "a", encoding="utf-8") as f:
+            f.write(log_line)
+    except Exception:
+        pass
+
+    # Akıllı yanıtlar ve doğal dil komutları
+    if any(k in text_lower for k in ["ekran", "foto", "ss", "screenshot", "resim", "görüntü", "goruntu"]):
+        handle_screenshot(message)
+    elif any(k in text_lower for k in ["durum", "status", "neler yapıyorsun", "ne yapıyorsun", "ne yapiyorsun", "pc nasıl", "bilgisayar nasıl"]):
+        handle_status(message)
+    elif any(k in text_lower for k in ["aktif", "pencere", "odak"]):
+        handle_active(message)
+    elif any(k in text_lower for k in ["süreç", "surec", "process"]):
+        handle_processes(message)
+    elif any(k in text_lower for k in ["selam", "merhaba", "hey", "hi", "hello", "slm"]):
+        stats = system_info.get_system_stats()
+        bot.reply_to(
+            message,
+            f"👋 <b>Merhaba!</b>\n\n"
+            f"Bilgisayarınız aktif ve çalışıyor.\n"
+            f"• <b>Şu An Açık:</b> <code>{stats['active_window']}</code>\n"
+            f"• <b>CPU:</b> %{stats['cpu_percent']} | <b>RAM:</b> %{stats['ram_percent']}\n\n"
+            f"Ekranı görmek için <b>'📸 Ekran Görüntüsü'</b>ne basabilirsiniz.",
+            reply_markup=get_main_keyboard()
+        )
+    else:
+        bot.reply_to(
+            message,
+            f"📩 Mesajınızı aldım:\n<i>\"{raw_text}\"</i>\n\n"
+            f"Bilgisayarda işlem yapmak için aşağıdaki butonları kullanabilir "
+            f"veya <code>/screenshot</code>, <code>/status</code> yazabilirsiniz 👇",
+            reply_markup=get_main_keyboard()
+        )
+
+
 def start_heartbeat():
     """Belirlenen aralıklarla arka planda durum bildirimi gönderir."""
     if HEARTBEAT_INTERVAL_MINUTES <= 0 or not ALLOWED_CHAT_IDS:
